@@ -37,7 +37,7 @@ describe.skipIf(!API_KEY)('Streaming Integration', () => {
 
     const usage = await result.usage;
     expect(usage).toBeDefined();
-    expect(usage?.promptTokens).toBeGreaterThan(0);
-    expect(usage?.completionTokens).toBeGreaterThan(0);
+    expect(usage?.inputTokens).toBeGreaterThan(0);
+    expect(usage?.outputTokens).toBeGreaterThan(0);
   }, 30000);
 });
