@@ -33,6 +33,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/elevenlabs": "^2.0.29",
     "@ai-sdk/openai-compatible": "^2.0.41"
   },
   "peerDependencies": {
