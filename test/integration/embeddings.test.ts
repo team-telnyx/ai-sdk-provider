@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { embed } from 'ai';
+import { embed, embedMany } from 'ai';
 import { createTelnyx } from '../../src/telnyx-provider';
 import { API_KEY } from '../utils';
 
@@ -18,7 +18,7 @@ describe.skipIf(!API_KEY)('Embeddings Integration', () => {
   }, 30000);
 
   it('generates embeddings for multiple values', async () => {
-    const { embeddings } = await embed({
+    const { embeddings } = await embedMany({
       model: telnyx.embeddingModel('thenlper/gte-large'),
       values: ['Hello world', 'WebRTC is cool'],
     });
