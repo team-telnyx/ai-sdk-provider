@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateText, tool } from 'ai';
-import { z } from 'zod';
+import { generateText, tool, jsonSchema, stepCountIs } from 'ai';
 import { createTelnyx } from '../../src/telnyx-provider';
 import { API_KEY } from '../utils';
 
@@ -14,15 +13,19 @@ describe.skipIf(!API_KEY)('Tool Calling Integration', () => {
       tools: {
         weather: tool({
           description: 'Get the weather for a location',
-          parameters: z.object({
-            location: z.string(),
+          inputSchema: jsonSchema({
+            type: 'object',
+            properties: {
+              location: { type: 'string', description: 'The location to get weather for' },
+            },
+            required: ['location'],
           }),
           execute: async ({ location }) => {
             return `22°C, sunny in ${location}`;
           },
         }),
       },
-      maxSteps: 3,
+      stopWhen: stepCountIs(5),
     });
 
     expect(text).toBeDefined();
