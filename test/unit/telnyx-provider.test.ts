@@ -72,11 +72,13 @@ describe('createTelnyx', () => {
     expect(model).toBeDefined();
   });
 
-  it('provider.speechModel() throws not implemented', () => {
+  it('provider.speechModel() returns a TelnyxSpeechModel', () => {
     const provider = createTelnyx({ apiKey: 'test' });
-    expect(() => provider.speechModel('any')).toThrow(
-      'Speech models are not yet implemented',
-    );
+    const model = provider.speechModel('tts-1');
+    expect(model).toBeDefined();
+    expect(model.specificationVersion).toBe('v3');
+    expect(model.modelId).toBe('tts-1');
+    expect(model.provider).toBe('telnyx.speech');
   });
 
   it('provider.transcriptionModel() throws not implemented', () => {
