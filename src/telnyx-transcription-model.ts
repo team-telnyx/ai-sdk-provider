@@ -127,15 +127,9 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
       formDataFields.response_format = 'verbose_json';
     }
 
-    // Add timestamp_granularities from providerOptions
-    // Note: OpenAI-compatible API expects this as repeated form field
-    // e.g. timestamp_granularities[]=segment
-    if (telnyxOptions?.timestamp_granularities?.length) {
-      // Convert array to bracketed form fields
-      for (const granularity of telnyxOptions.timestamp_granularities) {
-        formDataFields['timestamp_granularities[]'] = granularity;
-      }
-    }
+    // timestamp_granularities is handled separately after FormData creation
+    // because convertToFormData double-brackets array values ([][] instead of []).
+    const timestampGranularities = telnyxOptions?.timestamp_granularities;
 
     // Add language from providerOptions
     if (telnyxOptions?.language) {
@@ -158,11 +152,22 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
       audioData = options.audio;
     }
 
-    const audioBlob = new Blob([audioData.buffer as ArrayBuffer], { type: mediaType });
+    // Create a Blob from a safe copy of the audio data.
+    // Using .buffer is unsafe (may be larger than the view or a SharedArrayBuffer),
+    // and passing Uint8Array directly fails strict TS type checks for BlobPart.
+    const audioBlob = new Blob([new Uint8Array(audioData)], { type: mediaType });
     const filename = `audio.${extension}`;
 
     // Convert to FormData
     const formData = convertToFormData(formDataFields);
+
+    // Append timestamp_granularities as repeated form fields (e.g. timestamp_granularities[]=segment)
+    // Must be done manually because convertToFormData double-brackets arrays.
+    if (timestampGranularities?.length) {
+      for (const granularity of timestampGranularities) {
+        formData.append('timestamp_granularities[]', granularity);
+      }
+    }
 
     // Append the audio file
     formData.append('file', audioBlob, filename);
@@ -201,7 +206,9 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
     return {
       text: response.text ?? '',
       segments,
-      language: telnyxOptions?.language ?? undefined,
+      // Prefer the language detected by the API (from verbose_json response),
+      // fall back to the requested language from providerOptions.
+      language: response.language ?? telnyxOptions?.language ?? undefined,
       durationInSeconds: response.duration ?? undefined,
       warnings,
       request: {
@@ -222,6 +229,8 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
 const transcriptionResponseSchema = z.object({
   text: z.string(),
   duration: z.number().optional(),
+  // Language detected by the API (available in verbose_json responses).
+  language: z.string().optional(),
   segments: z
     .array(
       z.object({
@@ -232,6 +241,9 @@ const transcriptionResponseSchema = z.object({
       }),
     )
     .optional(),
+  // Words are parsed from the API response but not yet mapped to the
+  // AI SDK return type (TranscriptionModelV3 does not define a words field).
+  // Kept in the schema for forward compatibility when the SDK adds word-level support.
   words: z
     .array(
       z.object({
@@ -269,12 +281,9 @@ function mediaTypeToExtension(mediaType: string): string {
 
 /**
  * Decode a base64 string to Uint8Array.
+ * Uses Buffer.from for Node.js 18+ compatibility
+ * (atob is only globally available in Node.js 19+).
  */
 function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
+  return Buffer.from(base64, 'base64');
 }
