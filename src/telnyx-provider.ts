@@ -72,6 +72,27 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
    * Or use explicit methods for other model types:
    * `telnyx.embeddingModel('thenlper/gte-large')`
    */
+  // Factory functions (defined once, aliased below)
+  const createSpeechModel = (modelId: TelnyxSpeechModelId) =>
+    new TelnyxSpeechModel(modelId, {
+      provider: 'telnyx.speech',
+      baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
+      headers: () => ({
+        Authorization: `Bearer ${apiKey}`,
+      }),
+      fetch: options.fetch,
+    });
+
+  const createTranscriptionModel = (modelId: TelnyxTranscriptionModelId) =>
+    new TelnyxTranscriptionModel(modelId, {
+      provider: 'telnyx.transcription',
+      baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
+      headers: () => ({
+        Authorization: `Bearer ${apiKey}`,
+      }),
+      fetch: options.fetch,
+    });
+
   const provider = Object.assign(
     // Default: language model
     (modelId: TelnyxChatModelId) => openaiCompatible.languageModel(modelId),
@@ -103,21 +124,19 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
        * import { telnyx } from '@telnyx/ai-sdk-provider';
        *
        * const { audio } = await generateSpeech({
-       *   model: telnyx.speechModel('tts-1'),
+       *   model: telnyx.speech('tts-1'),
        *   text: 'Hello, world!',
        *   voice: 'Telnyx.NaturalHD.astra',
        * });
        * ```
        */
-      speechModel: (modelId: TelnyxSpeechModelId) =>
-        new TelnyxSpeechModel(modelId, {
-          provider: 'telnyx.speech',
-          baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
-          headers: () => ({
-            Authorization: `Bearer ${apiKey}`,
-          }),
-          fetch: options.fetch,
-        }),
+      speech: createSpeechModel,
+
+      /**
+       * Get a speech model (TTS).
+       * Alias for `speech()` to match the ProviderV3/V4 interface.
+       */
+      speechModel: createSpeechModel,
 
       /**
        * Get a transcription model (STT).
@@ -139,20 +158,18 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
        * import { readFile } from 'fs/promises';
        *
        * const transcript = await transcribe({
-       *   model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
+       *   model: telnyx.transcription('distil-whisper/distil-large-v2'),
        *   audio: await readFile('audio.mp3'),
        * });
        * ```
        */
-      transcriptionModel: (modelId: TelnyxTranscriptionModelId) =>
-        new TelnyxTranscriptionModel(modelId, {
-          provider: 'telnyx.transcription',
-          baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
-          headers: () => ({
-            Authorization: `Bearer ${apiKey}`,
-          }),
-          fetch: options.fetch,
-        }),
+      transcription: createTranscriptionModel,
+
+      /**
+       * Get a transcription model (STT).
+       * Alias for `transcription()` to match the ProviderV3/V4 interface.
+       */
+      transcriptionModel: createTranscriptionModel,
     },
   );
 

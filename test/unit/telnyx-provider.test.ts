@@ -72,22 +72,32 @@ describe('createTelnyx', () => {
     expect(model).toBeDefined();
   });
 
-  it('provider.speechModel() returns a TelnyxSpeechModel', () => {
+  it('provider.speech() returns a TelnyxSpeechModel', () => {
     const provider = createTelnyx({ apiKey: 'test' });
-    const model = provider.speechModel('tts-1');
+    const model = provider.speech('tts-1');
     expect(model).toBeDefined();
     expect(model.specificationVersion).toBe('v3');
     expect(model.modelId).toBe('tts-1');
     expect(model.provider).toBe('telnyx.speech');
   });
 
-  it('provider.transcriptionModel() returns a TelnyxTranscriptionModel', () => {
+  it('provider.speechModel() is an alias for speech()', () => {
     const provider = createTelnyx({ apiKey: 'test' });
-    const model = provider.transcriptionModel('distil-whisper/distil-large-v2');
+    expect(provider.speechModel).toBe(provider.speech);
+  });
+
+  it('provider.transcription() returns a TelnyxTranscriptionModel', () => {
+    const provider = createTelnyx({ apiKey: 'test' });
+    const model = provider.transcription('distil-whisper/distil-large-v2');
     expect(model).toBeDefined();
     expect(model.specificationVersion).toBe('v3');
     expect(model.modelId).toBe('distil-whisper/distil-large-v2');
     expect(model.provider).toBe('telnyx.transcription');
+  });
+
+  it('provider.transcriptionModel() is an alias for transcription()', () => {
+    const provider = createTelnyx({ apiKey: 'test' });
+    expect(provider.transcriptionModel).toBe(provider.transcription);
   });
 });
 
@@ -104,11 +114,21 @@ describe('default telnyx export', () => {
     expect(typeof telnyx.embeddingModel).toBe('function');
   });
 
-  it('has speechModel method', () => {
-    expect(typeof telnyx.speechModel).toBe('function');
+  it('has speech method', () => {
+    expect(typeof telnyx.speech).toBe('function');
   });
 
-  it('has transcriptionModel method', () => {
+  it('has speechModel method (alias)', () => {
+    expect(typeof telnyx.speechModel).toBe('function');
+    expect(telnyx.speechModel).toBe(telnyx.speech);
+  });
+
+  it('has transcription method', () => {
+    expect(typeof telnyx.transcription).toBe('function');
+  });
+
+  it('has transcriptionModel method (alias)', () => {
     expect(typeof telnyx.transcriptionModel).toBe('function');
+    expect(telnyx.transcriptionModel).toBe(telnyx.transcription);
   });
 });
