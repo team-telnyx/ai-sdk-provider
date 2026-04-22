@@ -5,6 +5,7 @@ import type {
   TelnyxSpeechModelId,
   TelnyxTranscriptionModelId,
 } from './telnyx-models.js';
+import { TelnyxSpeechModel } from './telnyx-speech-model.js';
 
 /**
  * Telnyx provider configuration options.
@@ -22,6 +23,12 @@ export interface TelnyxProviderSettings {
    * Defaults to https://api.telnyx.com/v2/ai/openai
    */
   baseURL?: string;
+
+  /**
+   * Custom fetch function for making HTTP requests.
+   * Useful for testing or custom request handling.
+   */
+  fetch?: typeof globalThis.fetch;
 }
 
 /**
@@ -82,17 +89,38 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
 
       /**
        * Get a speech model (TTS).
-       * @deprecated Not yet implemented. Will be available in Phase 3.
+       *
+       * Uses the Telnyx Text-to-Speech API to generate audio from text.
+       *
+       * @param modelId - The speech model ID (e.g. 'tts-1').
+       *   This is for logging/categorization only; the actual voice is
+       *   specified via the `voice` parameter in `generateSpeech`.
+       *
+       * @example
+       * ```typescript
+       * import { experimental_generateSpeech as generateSpeech } from 'ai';
+       * import { telnyx } from '@telnyx/ai-sdk-provider';
+       *
+       * const { audio } = await generateSpeech({
+       *   model: telnyx.speechModel('tts-1'),
+       *   text: 'Hello, world!',
+       *   voice: 'Telnyx.NaturalHD.astra',
+       * });
+       * ```
        */
-      speechModel: (_modelId: TelnyxSpeechModelId) => {
-        throw new Error(
-          'Speech models are not yet implemented. Will be available in a future release.',
-        );
-      },
+      speechModel: (modelId: TelnyxSpeechModelId) =>
+        new TelnyxSpeechModel(modelId, {
+          provider: 'telnyx.speech',
+          baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
+          headers: () => ({
+            Authorization: `Bearer ${apiKey}`,
+          }),
+          fetch: options.fetch,
+        }),
 
       /**
        * Get a transcription model (STT).
-       * @deprecated Not yet implemented. Will be available in Phase 3.
+       * Not yet implemented. Will be available in a future release.
        */
       transcriptionModel: (_modelId: TelnyxTranscriptionModelId) => {
         throw new Error(
