@@ -6,6 +6,7 @@ import type {
   TelnyxTranscriptionModelId,
 } from './telnyx-models.js';
 import { TelnyxSpeechModel } from './telnyx-speech-model.js';
+import { TelnyxTranscriptionModel } from './telnyx-transcription-model.js';
 
 /**
  * Telnyx provider configuration options.
@@ -120,13 +121,38 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
 
       /**
        * Get a transcription model (STT).
-       * Not yet implemented. Will be available in a future release.
+       *
+       * Uses the Telnyx Speech-to-Text REST API to transcribe audio files.
+       * This endpoint is OpenAI-compatible.
+       *
+       * Supported models:
+       * - `distil-whisper/distil-large-v2` — low latency, English-only
+       * - `openai/whisper-large-v3-turbo` — multilingual
+       * - `deepgram/nova-3` — English variants, supports diarization
+       *
+       * @param modelId - The transcription model ID.
+       *
+       * @example
+       * ```typescript
+       * import { experimental_transcribe as transcribe } from 'ai';
+       * import { telnyx } from '@telnyx/ai-sdk-provider';
+       * import { readFile } from 'fs/promises';
+       *
+       * const transcript = await transcribe({
+       *   model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
+       *   audio: await readFile('audio.mp3'),
+       * });
+       * ```
        */
-      transcriptionModel: (_modelId: TelnyxTranscriptionModelId) => {
-        throw new Error(
-          'Transcription models are not yet implemented. Will be available in a future release.',
-        );
-      },
+      transcriptionModel: (modelId: TelnyxTranscriptionModelId) =>
+        new TelnyxTranscriptionModel(modelId, {
+          provider: 'telnyx.transcription',
+          baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
+          headers: () => ({
+            Authorization: `Bearer ${apiKey}`,
+          }),
+          fetch: options.fetch,
+        }),
     },
   );
 

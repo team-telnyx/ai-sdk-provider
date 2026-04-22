@@ -81,11 +81,13 @@ describe('createTelnyx', () => {
     expect(model.provider).toBe('telnyx.speech');
   });
 
-  it('provider.transcriptionModel() throws not implemented', () => {
+  it('provider.transcriptionModel() returns a TelnyxTranscriptionModel', () => {
     const provider = createTelnyx({ apiKey: 'test' });
-    expect(() => provider.transcriptionModel('any')).toThrow(
-      'Transcription models are not yet implemented',
-    );
+    const model = provider.transcriptionModel('distil-whisper/distil-large-v2');
+    expect(model).toBeDefined();
+    expect(model.specificationVersion).toBe('v3');
+    expect(model.modelId).toBe('distil-whisper/distil-large-v2');
+    expect(model.provider).toBe('telnyx.transcription');
   });
 });
 
