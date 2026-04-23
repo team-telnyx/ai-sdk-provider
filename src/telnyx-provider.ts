@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { loadApiKey } from '@ai-sdk/provider-utils';
 import type {
   TelnyxChatModelId,
   TelnyxEmbeddingModelId,
@@ -53,14 +54,15 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     options.baseURL ?? process.env.TELNYX_BASE_URL ??
     'https://api.telnyx.com/v2/ai/openai';
 
-  const apiKey = options.apiKey ?? process.env.TELNYX_API_KEY ?? '';
+  // Lazy API key resolution: loadApiKey is called when the provider
+  // is instantiated. If no apiKey is provided and TELNYX_API_KEY is not
+  // set, loadApiKey will throw a helpful error message.
+  const apiKey = options.apiKey ?? process.env.TELNYX_API_KEY;
 
   const openaiCompatible = createOpenAICompatible({
     name: 'telnyx',
     baseURL,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
+    ...(apiKey ? { apiKey } : {}),
   });
 
   /**
@@ -78,7 +80,11 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
       provider: 'telnyx.speech',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
       headers: () => ({
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${loadApiKey({
+          apiKey: options.apiKey,
+          environmentVariableName: 'TELNYX_API_KEY',
+          description: 'Telnyx',
+        })}`,
       }),
       fetch: options.fetch,
     });
@@ -88,7 +94,11 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
       provider: 'telnyx.transcription',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
       headers: () => ({
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${loadApiKey({
+          apiKey: options.apiKey,
+          environmentVariableName: 'TELNYX_API_KEY',
+          description: 'Telnyx',
+        })}`,
       }),
       fetch: options.fetch,
     });
