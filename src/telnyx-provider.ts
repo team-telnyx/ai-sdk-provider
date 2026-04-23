@@ -1,11 +1,13 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { loadApiKey } from '@ai-sdk/provider-utils';
-import type {
-  EmbeddingModelV3,
-  LanguageModelV3,
-  ProviderV3,
-  SpeechModelV3,
-  TranscriptionModelV3,
+import {
+  NoSuchModelError,
+  type EmbeddingModelV3,
+  type ImageModelV3,
+  type LanguageModelV3,
+  type ProviderV3,
+  type SpeechModelV3,
+  type TranscriptionModelV3,
 } from '@ai-sdk/provider';
 import type {
   TelnyxChatModelId,
@@ -124,6 +126,18 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
         openaiCompatible.textEmbeddingModel(modelId),
 
       /**
+       * Telnyx does not support image models.
+       * @throws {NoSuchModelError}
+       */
+      imageModel: (modelId: string): ImageModelV3 => {
+        throw new NoSuchModelError({
+          modelId,
+          modelType: 'imageModel',
+          message: 'Telnyx does not provide image models',
+        });
+      },
+
+      /**
        * Get a speech model (TTS).
        *
        * Uses the Telnyx Text-to-Speech API to generate audio from text.
@@ -209,7 +223,7 @@ export interface TelnyxProvider extends ProviderV3 {
   /**
    * Get an embedding model.
    */
-  embeddingModel(modelId: TelnyxEmbeddingModelId): EmbeddingModelV3<string>;
+  embeddingModel(modelId: TelnyxEmbeddingModelId): EmbeddingModelV3;
 
   /**
    * Get a speech model (TTS).
