@@ -99,6 +99,11 @@ describe('createTelnyx', () => {
     const provider = createTelnyx({ apiKey: 'test' });
     expect(provider.transcriptionModel).toBe(provider.transcription);
   });
+
+  it('provider has specificationVersion v3', () => {
+    const provider = createTelnyx({ apiKey: 'test' });
+    expect(provider.specificationVersion).toBe('v3');
+  });
 });
 
 describe('default telnyx export', () => {

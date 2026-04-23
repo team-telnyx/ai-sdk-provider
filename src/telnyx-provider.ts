@@ -1,6 +1,13 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { loadApiKey } from '@ai-sdk/provider-utils';
 import type {
+  EmbeddingModelV3,
+  LanguageModelV3,
+  ProviderV3,
+  SpeechModelV3,
+  TranscriptionModelV3,
+} from '@ai-sdk/provider';
+import type {
   TelnyxChatModelId,
   TelnyxEmbeddingModelId,
   TelnyxSpeechModelId,
@@ -103,6 +110,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     // Default: language model
     (modelId: TelnyxChatModelId) => openaiCompatible.languageModel(modelId),
     {
+      specificationVersion: 'v3' as const,
       /**
        * Get a language model (chat completions).
        */
@@ -179,7 +187,51 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     },
   );
 
-  return provider;
+  return provider as TelnyxProvider;
+}
+
+/**
+ * Telnyx provider interface following the AI SDK ProviderV3 specification.
+ */
+export interface TelnyxProvider extends ProviderV3 {
+  /**
+   * Call the provider as a function to get a language model.
+   */
+  (modelId: TelnyxChatModelId): LanguageModelV3;
+
+  readonly specificationVersion: 'v3';
+
+  /**
+   * Get a language model (chat completions).
+   */
+  languageModel(modelId: TelnyxChatModelId): LanguageModelV3;
+
+  /**
+   * Get an embedding model.
+   */
+  embeddingModel(modelId: TelnyxEmbeddingModelId): EmbeddingModelV3<string>;
+
+  /**
+   * Get a speech model (TTS).
+   */
+  speech(modelId: TelnyxSpeechModelId): SpeechModelV3;
+
+  /**
+   * Get a speech model (TTS).
+   * Alias for `speech()` to match the ProviderV3/V4 interface.
+   */
+  speechModel(modelId: TelnyxSpeechModelId): SpeechModelV3;
+
+  /**
+   * Get a transcription model (STT).
+   */
+  transcription(modelId: TelnyxTranscriptionModelId): TranscriptionModelV3;
+
+  /**
+   * Get a transcription model (STT).
+   * Alias for `transcription()` to match the ProviderV3/V4 interface.
+   */
+  transcriptionModel(modelId: TelnyxTranscriptionModelId): TranscriptionModelV3;
 }
 
 /**
@@ -257,4 +309,4 @@ Object.defineProperties(_telnyxFn, {
   },
 });
 
-export const telnyx = _telnyxFn as ReturnType<typeof createTelnyx>;
+export const telnyx = _telnyxFn as TelnyxProvider;
