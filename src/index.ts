@@ -17,6 +17,7 @@
  */
 
 export { telnyx, createTelnyx } from './telnyx-provider.js';
+export { VERSION } from './version.js';
 export type {
   TelnyxProviderSettings,
 } from './telnyx-provider.js';
