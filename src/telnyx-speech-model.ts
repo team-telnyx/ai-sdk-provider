@@ -3,6 +3,7 @@ import {
   combineHeaders,
   createBinaryResponseHandler,
   createStatusCodeErrorResponseHandler,
+  parseProviderOptions,
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod/v4';
@@ -164,29 +165,4 @@ export class TelnyxSpeechModel implements SpeechModelV3 {
       },
     };
   }
-}
-
-/**
- * Parse provider options from the AI SDK format.
- * Mirrors the pattern used by official AI SDK providers.
- */
-async function parseProviderOptions<T>({
-  provider,
-  providerOptions,
-  schema,
-}: {
-  provider: string;
-  providerOptions: Record<string, unknown> | undefined;
-  schema: z.ZodType<T>;
-}): Promise<T | null> {
-  if (!providerOptions?.[provider]) {
-    return null;
-  }
-
-  const result = schema.safeParse(providerOptions[provider]);
-  if (!result.success) {
-    return null;
-  }
-
-  return result.data;
 }
