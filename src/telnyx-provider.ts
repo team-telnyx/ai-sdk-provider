@@ -54,15 +54,19 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     options.baseURL ?? process.env.TELNYX_BASE_URL ??
     'https://api.telnyx.com/v2/ai/openai';
 
-  // Lazy API key resolution: loadApiKey is called when the provider
-  // is instantiated. If no apiKey is provided and TELNYX_API_KEY is not
-  // set, loadApiKey will throw a helpful error message.
-  const apiKey = options.apiKey ?? process.env.TELNYX_API_KEY;
+  // API key resolution using loadApiKey from @ai-sdk/provider-utils.
+  // This provides a consistent, clear LoadAPIKeyError for all model types
+  // when no key is configured.
+  const apiKey = loadApiKey({
+    apiKey: options.apiKey,
+    environmentVariableName: 'TELNYX_API_KEY',
+    description: 'Telnyx',
+  });
 
   const openaiCompatible = createOpenAICompatible({
     name: 'telnyx',
     baseURL,
-    ...(apiKey ? { apiKey } : {}),
+    apiKey,
   });
 
   /**
@@ -80,11 +84,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
       provider: 'telnyx.speech',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
       headers: () => ({
-        Authorization: `Bearer ${loadApiKey({
-          apiKey: options.apiKey,
-          environmentVariableName: 'TELNYX_API_KEY',
-          description: 'Telnyx',
-        })}`,
+        Authorization: `Bearer ${apiKey}`,
       }),
       fetch: options.fetch,
     });
@@ -94,11 +94,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
       provider: 'telnyx.transcription',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
       headers: () => ({
-        Authorization: `Bearer ${loadApiKey({
-          apiKey: options.apiKey,
-          environmentVariableName: 'TELNYX_API_KEY',
-          description: 'Telnyx',
-        })}`,
+        Authorization: `Bearer ${apiKey}`,
       }),
       fetch: options.fetch,
     });
@@ -202,4 +198,57 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
  * });
  * ```
  */
-export const telnyx = createTelnyx();
+// Lazy-initialized default export. This avoids throwing LoadAPIKeyError
+// at import time when TELNYX_API_KEY is not set. The provider is created
+// on first actual use (calling the provider or its methods), deferring
+// the API key validation until a request is made.
+let _telnyx: ReturnType<typeof createTelnyx> | undefined;
+
+function getTelnyx(): ReturnType<typeof createTelnyx> {
+  if (!_telnyx) {
+    _telnyx = createTelnyx();
+  }
+  return _telnyx;
+}
+
+// Callable function with lazy-initialized properties.
+// Object.defineProperties preserves getters (Object.assign would eagerly
+// evaluate them). Accessing properties like `telnyx.speech` is safe without
+// an API key — it returns a function. The LoadAPIKeyError is only thrown
+// when the function is actually invoked.
+const _telnyxFn = (modelId: string) =>
+  getTelnyx()(modelId as TelnyxChatModelId);
+
+Object.defineProperties(_telnyxFn, {
+  specificationVersion: {
+    value: 'v3' as const,
+    enumerable: true,
+    writable: false,
+  },
+  languageModel: {
+    get: () => getTelnyx().languageModel,
+    enumerable: true,
+  },
+  embeddingModel: {
+    get: () => getTelnyx().embeddingModel,
+    enumerable: true,
+  },
+  speech: {
+    get: () => getTelnyx().speech,
+    enumerable: true,
+  },
+  speechModel: {
+    get: () => getTelnyx().speechModel,
+    enumerable: true,
+  },
+  transcription: {
+    get: () => getTelnyx().transcription,
+    enumerable: true,
+  },
+  transcriptionModel: {
+    get: () => getTelnyx().transcriptionModel,
+    enumerable: true,
+  },
+});
+
+export const telnyx = _telnyxFn as ReturnType<typeof createTelnyx>;
