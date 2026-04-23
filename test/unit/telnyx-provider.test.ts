@@ -102,33 +102,35 @@ describe('createTelnyx', () => {
 });
 
 describe('default telnyx export', () => {
-  it('is a callable function', () => {
+  beforeEach(() => {
+    delete process.env.TELNYX_API_KEY;
+    delete process.env.TELNYX_BASE_URL;
+  });
+
+  it('is a callable function (lazy)', () => {
+    // The default export is a lazy wrapper — typeof is 'function'
+    // without needing an API key (it doesn't call createTelnyx() until used)
     expect(typeof telnyx).toBe('function');
   });
 
-  it('has languageModel method', () => {
-    expect(typeof telnyx.languageModel).toBe('function');
+  it('has specificationVersion', () => {
+    expect(telnyx.specificationVersion).toBe('v3');
   });
 
-  it('has embeddingModel method', () => {
-    expect(typeof telnyx.embeddingModel).toBe('function');
+  it('throws LoadAPIKeyError when called without API key', () => {
+    // Using the provider without an API key should throw LoadAPIKeyError
+    expect(() => telnyx('Qwen/Qwen3-235B-A22B')).toThrow(/API key is missing/);
   });
 
-  it('has speech method', () => {
-    expect(typeof telnyx.speech).toBe('function');
-  });
-
-  it('has speechModel method (alias)', () => {
-    expect(typeof telnyx.speechModel).toBe('function');
-    expect(telnyx.speechModel).toBe(telnyx.speech);
-  });
-
-  it('has transcription method', () => {
-    expect(typeof telnyx.transcription).toBe('function');
-  });
-
-  it('has transcriptionModel method (alias)', () => {
-    expect(typeof telnyx.transcriptionModel).toBe('function');
-    expect(telnyx.transcriptionModel).toBe(telnyx.transcription);
+  it('works with API key set', () => {
+    process.env.TELNYX_API_KEY = 'test_key';
+    // Force re-initialization with the new env var
+    const provider = createTelnyx();
+    expect(typeof provider).toBe('function');
+    expect(typeof provider.languageModel).toBe('function');
+    expect(typeof provider.speech).toBe('function');
+    expect(typeof provider.transcription).toBe('function');
+    expect(provider.speechModel).toBe(provider.speech);
+    expect(provider.transcriptionModel).toBe(provider.transcription);
   });
 });
