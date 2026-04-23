@@ -99,6 +99,11 @@ describe('createTelnyx', () => {
     const provider = createTelnyx({ apiKey: 'test' });
     expect(provider.transcriptionModel).toBe(provider.transcription);
   });
+
+  it('provider.imageModel() throws NoSuchModelError', () => {
+    const provider = createTelnyx({ apiKey: 'test' });
+    expect(() => provider.imageModel('test')).toThrow();
+  });
 });
 
 describe('default telnyx export', () => {

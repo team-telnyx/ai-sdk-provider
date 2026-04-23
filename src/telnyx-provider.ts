@@ -1,4 +1,7 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import {
+  NoSuchModelError,
+} from '@ai-sdk/provider';
 import type {
   TelnyxChatModelId,
   TelnyxEmbeddingModelId,
@@ -170,6 +173,18 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
        * Alias for `transcription()` to match the ProviderV3/V4 interface.
        */
       transcriptionModel: createTranscriptionModel,
+
+      /**
+       * Image models are not supported by Telnyx.
+       * @throws {NoSuchModelError}
+       */
+      imageModel: (modelId: string) => {
+        throw new NoSuchModelError({
+          modelId,
+          modelType: 'imageModel',
+          message: 'Telnyx does not provide image models',
+        });
+      },
     },
   );
 
