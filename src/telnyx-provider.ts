@@ -215,7 +215,7 @@ function getTelnyx(): ReturnType<typeof createTelnyx> {
 // Object.defineProperties preserves getters (Object.assign would eagerly
 // evaluate them). Accessing properties like `telnyx.speech` is safe without
 // an API key — it returns a function. The LoadAPIKeyError is only thrown
-// when the function is actually invoked.
+// when the returned function is actually invoked.
 const _telnyxFn = (modelId: string) =>
   getTelnyx()(modelId as TelnyxChatModelId);
 
@@ -226,27 +226,33 @@ Object.defineProperties(_telnyxFn, {
     writable: false,
   },
   languageModel: {
-    get: () => getTelnyx().languageModel,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['languageModel']>) =>
+      getTelnyx().languageModel(...args),
     enumerable: true,
   },
   embeddingModel: {
-    get: () => getTelnyx().embeddingModel,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['embeddingModel']>) =>
+      getTelnyx().embeddingModel(...args),
     enumerable: true,
   },
   speech: {
-    get: () => getTelnyx().speech,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['speech']>) =>
+      getTelnyx().speech(...args),
     enumerable: true,
   },
   speechModel: {
-    get: () => getTelnyx().speechModel,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['speechModel']>) =>
+      getTelnyx().speechModel(...args),
     enumerable: true,
   },
   transcription: {
-    get: () => getTelnyx().transcription,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['transcription']>) =>
+      getTelnyx().transcription(...args),
     enumerable: true,
   },
   transcriptionModel: {
-    get: () => getTelnyx().transcriptionModel,
+    get: () => (...args: Parameters<ReturnType<typeof createTelnyx>['transcriptionModel']>) =>
+      getTelnyx().transcriptionModel(...args),
     enumerable: true,
   },
 });

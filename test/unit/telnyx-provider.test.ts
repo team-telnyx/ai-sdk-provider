@@ -113,13 +113,31 @@ describe('default telnyx export', () => {
     expect(typeof telnyx).toBe('function');
   });
 
-  it('has specificationVersion', () => {
+  it('has specificationVersion without API key', () => {
+    // specificationVersion is a value property, not a getter — always safe
     expect(telnyx.specificationVersion).toBe('v3');
+  });
+
+  it('property access is safe without API key', () => {
+    // Getters return lazy wrappers — accessing them does NOT throw.
+    // Only invoking the returned function throws LoadAPIKeyError.
+    expect(typeof telnyx.languageModel).toBe('function');
+    expect(typeof telnyx.embeddingModel).toBe('function');
+    expect(typeof telnyx.speech).toBe('function');
+    expect(typeof telnyx.speechModel).toBe('function');
+    expect(typeof telnyx.transcription).toBe('function');
+    expect(typeof telnyx.transcriptionModel).toBe('function');
   });
 
   it('throws LoadAPIKeyError when called without API key', () => {
     // Using the provider without an API key should throw LoadAPIKeyError
     expect(() => telnyx('Qwen/Qwen3-235B-A22B')).toThrow(/API key is missing/);
+  });
+
+  it('throws LoadAPIKeyError when model method invoked without API key', () => {
+    // Property access is safe, but invoking the model method throws
+    expect(() => telnyx.languageModel('test')).toThrow(/API key is missing/);
+    expect(() => telnyx.speech('test')).toThrow(/API key is missing/);
   });
 
   it('works with API key set', () => {
