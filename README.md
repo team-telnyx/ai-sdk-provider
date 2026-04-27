@@ -102,7 +102,7 @@ const { audio } = await generateSpeech({
 });
 ```
 
-You can also pass provider-specific options:
+You can also pass additional speech options:
 
 ```typescript
 import { telnyx } from '@telnyx/ai-sdk-provider';
@@ -113,6 +113,23 @@ const { audio, warnings } = await generateSpeech({
   text: 'Hello, welcome to Telnyx!',
   voice: 'Telnyx.KokoroTTS.af_alloy',
   outputFormat: 'mp3',
+});
+```
+
+Provider-specific options are also supported via `providerOptions.telnyx`:
+
+```typescript
+const { audio } = await generateSpeech({
+  model: telnyx.speechModel('tts-1'),
+  text: 'Hello, welcome to Telnyx!',
+  voice: 'Telnyx.NaturalHD.astra',
+  providerOptions: {
+    telnyx: {
+      output_format: 'linear16',
+      sample_rate: 24000,
+      language_code: 'en',
+    },
+  },
 });
 ```
 
@@ -156,7 +173,7 @@ import { createTelnyx } from '@telnyx/ai-sdk-provider';
 const telnyx = createTelnyx({
   apiKey: 'KEY_ID_SECRET',
   baseURL: 'https://api.telnyx.com/v2/ai/openai',
-  fetch: customFetch,
+  fetch: customFetch, // optional custom fetch implementation
 });
 ```
 
