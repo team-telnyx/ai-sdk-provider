@@ -102,33 +102,53 @@ describe('createTelnyx', () => {
 });
 
 describe('default telnyx export', () => {
-  it('is a callable function', () => {
+  beforeEach(() => {
+    delete process.env.TELNYX_API_KEY;
+    delete process.env.TELNYX_BASE_URL;
+  });
+
+  it('is a callable function (lazy)', () => {
+    // The default export is a lazy wrapper — typeof is 'function'
+    // without needing an API key (it doesn't call createTelnyx() until used)
     expect(typeof telnyx).toBe('function');
   });
 
-  it('has languageModel method', () => {
+  it('has specificationVersion without API key', () => {
+    // specificationVersion is a value property, not a getter — always safe
+    expect(telnyx.specificationVersion).toBe('v3');
+  });
+
+  it('property access is safe without API key', () => {
+    // Getters return lazy wrappers — accessing them does NOT throw.
+    // Only invoking the returned function throws LoadAPIKeyError.
     expect(typeof telnyx.languageModel).toBe('function');
-  });
-
-  it('has embeddingModel method', () => {
     expect(typeof telnyx.embeddingModel).toBe('function');
-  });
-
-  it('has speech method', () => {
     expect(typeof telnyx.speech).toBe('function');
-  });
-
-  it('has speechModel method (alias)', () => {
     expect(typeof telnyx.speechModel).toBe('function');
-    expect(telnyx.speechModel).toBe(telnyx.speech);
-  });
-
-  it('has transcription method', () => {
     expect(typeof telnyx.transcription).toBe('function');
+    expect(typeof telnyx.transcriptionModel).toBe('function');
   });
 
-  it('has transcriptionModel method (alias)', () => {
-    expect(typeof telnyx.transcriptionModel).toBe('function');
-    expect(telnyx.transcriptionModel).toBe(telnyx.transcription);
+  it('throws LoadAPIKeyError when called without API key', () => {
+    // Using the provider without an API key should throw LoadAPIKeyError
+    expect(() => telnyx('Qwen/Qwen3-235B-A22B')).toThrow(/API key is missing/);
+  });
+
+  it('throws LoadAPIKeyError when model method invoked without API key', () => {
+    // Property access is safe, but invoking the model method throws
+    expect(() => telnyx.languageModel('test')).toThrow(/API key is missing/);
+    expect(() => telnyx.speech('test')).toThrow(/API key is missing/);
+  });
+
+  it('works with API key set', () => {
+    process.env.TELNYX_API_KEY = 'test_key';
+    // Force re-initialization with the new env var
+    const provider = createTelnyx();
+    expect(typeof provider).toBe('function');
+    expect(typeof provider.languageModel).toBe('function');
+    expect(typeof provider.speech).toBe('function');
+    expect(typeof provider.transcription).toBe('function');
+    expect(provider.speechModel).toBe(provider.speech);
+    expect(provider.transcriptionModel).toBe(provider.transcription);
   });
 });
