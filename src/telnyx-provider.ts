@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { loadApiKey } from '@ai-sdk/provider-utils';
+import { loadApiKey, withUserAgentSuffix } from '@ai-sdk/provider-utils';
 import {
   NoSuchModelError,
   type EmbeddingModelV3,
@@ -17,6 +17,7 @@ import type {
 } from './telnyx-models.js';
 import { TelnyxSpeechModel } from './telnyx-speech-model.js';
 import { TelnyxTranscriptionModel } from './telnyx-transcription-model.js';
+import { VERSION } from './version.js';
 
 /**
  * Telnyx provider configuration options.
@@ -88,13 +89,17 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
    * `telnyx.embeddingModel('thenlper/gte-large')`
    */
   // Factory functions (defined once, aliased below)
+  const getHeaders = () =>
+    withUserAgentSuffix(
+      { Authorization: `Bearer ${apiKey}` },
+      `telnyx/ai-sdk-provider/${VERSION}`,
+    );
+
   const createSpeechModel = (modelId: TelnyxSpeechModelId) =>
     new TelnyxSpeechModel(modelId, {
       provider: 'telnyx.speech',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
-      headers: () => ({
-        Authorization: `Bearer ${apiKey}`,
-      }),
+      headers: getHeaders,
       fetch: options.fetch,
     });
 
@@ -102,9 +107,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     new TelnyxTranscriptionModel(modelId, {
       provider: 'telnyx.transcription',
       baseURL: baseURL.replace('/v2/ai/openai', '/v2'),
-      headers: () => ({
-        Authorization: `Bearer ${apiKey}`,
-      }),
+      headers: getHeaders,
       fetch: options.fetch,
     });
 
