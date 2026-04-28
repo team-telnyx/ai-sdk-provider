@@ -8,7 +8,7 @@ Telnyx provider for the [Vercel AI SDK](https://ai-sdk.dev), with support for ch
 npm install ai @telnyx/ai-sdk-provider zod
 ```
 
-`zod` is required when using tool calling schemas in your app.
+`zod` is a required peer dependency. This package imports `zod/v4` internally for speech and transcription model schemas, so consumers must install it even if they are not using tool calling.
 
 Set your Telnyx API key:
 
@@ -198,8 +198,10 @@ const telnyx = createTelnyx({
 
 | Model ID | Description |
 |---|---|
-| `tts-1` | Text-to-speech model |
-| `tts-1-hd` | Higher-quality text-to-speech model |
+| `tts-1` | Supported model identifier for AI SDK speech APIs |
+| `tts-1-hd` | Supported model identifier for AI SDK speech APIs |
+
+Note: for the current Telnyx TTS implementation, `modelId` is used as the AI SDK model identifier and for metadata/logging. The actual synthesis request is controlled by options such as `voice`, `outputFormat`, and provider-specific `providerOptions.telnyx`, not by a different upstream TTS model selected via `modelId`.
 
 ### Transcription Models
 
