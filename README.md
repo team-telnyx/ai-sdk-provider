@@ -1,29 +1,14 @@
 # @telnyx/ai-sdk-provider
 
-Telnyx provider for the [Vercel AI SDK](https://ai-sdk.dev) — LLM, Embeddings, and TTS in a single package.
-
-## Why Telnyx?
-
-**No other AI SDK provider covers all three interfaces:**
-
-| Provider | LLM | Embeddings | TTS | STT |
-|---|:---:|:---:|:---:|:---:|
-| OpenAI | ✅ | ✅ | ✅ | ✅ |
-| Anthropic | ✅ | ❌ | ❌ | ❌ |
-| Fireworks | ✅ | ✅ | ❌ | ❌ |
-| ElevenLabs | ❌ | ❌ | ✅ | ✅ |
-| Deepgram | ❌ | ❌ | ✅ | ✅ |
-| **Telnyx** | **✅** | **✅** | **✅** | 🔜 |
-
-A developer building a voice AI app currently needs 2–3 providers. With Telnyx, just one.
+Telnyx provider for the [Vercel AI SDK](https://ai-sdk.dev), with support for chat, embeddings, speech generation, and transcription.
 
 ## Setup
 
 ```bash
-npm install @telnyx/ai-sdk-provider zod
+npm install ai @telnyx/ai-sdk-provider zod
 ```
 
-> **Note:** This package follows the [official AI SDK provider pattern](https://ai-sdk.dev/providers/community-providers/custom-providers) — only `zod` is required as a peer dependency. The `ai` package should be installed separately in your app.
+`zod` is a required peer dependency. This package imports `zod/v4` internally for speech and transcription model schemas, so consumers must install it even if they are not using tool calling.
 
 Set your Telnyx API key:
 
@@ -113,31 +98,72 @@ import { experimental_generateSpeech as generateSpeech } from 'ai';
 const { audio } = await generateSpeech({
   model: telnyx.speechModel('tts-1'),
   text: 'Hello, welcome to Telnyx!',
-  voice: '29vDchNbjg4S6lPckOMX', // voice ID from Telnyx voices catalog
+  voice: 'Telnyx.NaturalHD.astra',
 });
 ```
 
-You can also pass provider-specific options:
+You can also pass additional speech options:
 
 ```typescript
 import { telnyx } from '@telnyx/ai-sdk-provider';
 import { experimental_generateSpeech as generateSpeech } from 'ai';
 
+const { audio, warnings } = await generateSpeech({
+  model: telnyx.speechModel('tts-1'),
+  text: 'Hello, welcome to Telnyx!',
+  voice: 'Telnyx.KokoroTTS.af_alloy',
+  outputFormat: 'mp3',
+});
+```
+
+Provider-specific options are also supported via `providerOptions.telnyx`:
+
+```typescript
 const { audio } = await generateSpeech({
   model: telnyx.speechModel('tts-1'),
   text: 'Hello, welcome to Telnyx!',
-  voice: '29vDchNbjg4S6lPckOMX',
+  voice: 'Telnyx.NaturalHD.astra',
   providerOptions: {
     telnyx: {
-      outputFormat: 'mp3',
-      speed: 1.0,
-      language: 'en',
+      output_format: 'linear16',
+      sample_rate: 24000,
+      language_code: 'en',
     },
   },
 });
 ```
 
-Browse available voices at the [Telnyx Voices API](https://api.telnyx.com/v2/text-to-speech/voices) — 3,301 voices across 7 providers.
+### Transcription (STT)
+
+```typescript
+import { telnyx } from '@telnyx/ai-sdk-provider';
+import { experimental_transcribe as transcribe } from 'ai';
+import { readFile } from 'node:fs/promises';
+
+const result = await transcribe({
+  model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
+  audio: await readFile('./audio.wav'),
+  mediaType: 'audio/wav',
+});
+
+console.log(result.text);
+```
+
+You can also use provider-specific options:
+
+```typescript
+const result = await transcribe({
+  model: telnyx.transcriptionModel('openai/whisper-large-v3-turbo'),
+  audio: await readFile('./audio.wav'),
+  mediaType: 'audio/wav',
+  providerOptions: {
+    telnyx: {
+      language: 'en',
+      response_format: 'verbose_json',
+    },
+  },
+});
+```
 
 ### Custom Instance
 
@@ -146,8 +172,7 @@ import { createTelnyx } from '@telnyx/ai-sdk-provider';
 
 const telnyx = createTelnyx({
   apiKey: 'KEY_ID_SECRET',
-  baseURL: 'https://api.telnyx.com/v2/ai/openai', // optional override
-  headers: { 'X-Custom-Header': 'value' }, // optional custom headers
+  baseURL: 'https://api.telnyx.com/v2/ai/openai',
   fetch: customFetch, // optional custom fetch implementation
 });
 ```
@@ -173,18 +198,41 @@ const telnyx = createTelnyx({
 
 | Model ID | Description |
 |---|---|
-| `tts-1` | Optimized for speed |
-| `tts-1-hd` | Optimized for quality |
+| `tts-1` | Supported model identifier for AI SDK speech APIs |
+| `tts-1-hd` | Supported model identifier for AI SDK speech APIs |
 
-> **Note:** TTS requires `ai@6` or later (`SpeechModelV3`).
+Note: for the current Telnyx TTS implementation, `modelId` is used as the AI SDK model identifier and for metadata/logging. The actual synthesis request is controlled by options such as `voice`, `outputFormat`, and provider-specific `providerOptions.telnyx`, not by a different upstream TTS model selected via `modelId`.
 
-## Compatibility
+### Transcription Models
 
-| AI SDK Version | Chat | Embeddings | TTS |
-|---|:---:|:---:|:---:|
-| `ai@4` | ✅ | ✅ | ❌ |
-| `ai@5` | ✅ | ✅ | ❌ |
-| `ai@6` | ✅ | ✅ | ✅ |
+Examples:
+- `distil-whisper/distil-large-v2`
+- `openai/whisper-large-v3-turbo`
+- `deepgram/nova-3`
+
+## Exports
+
+```typescript
+import {
+  telnyx,
+  createTelnyx,
+  VERSION,
+  type TelnyxProviderSettings,
+  type TelnyxChatModelId,
+  type TelnyxEmbeddingModelId,
+  type TelnyxSpeechModelId,
+  type TelnyxTranscriptionModelId,
+} from '@telnyx/ai-sdk-provider';
+```
+
+## Notes
+
+- `telnyx('model-id')` is an alias for `telnyx.languageModel('model-id')`
+- `telnyx.speech()` and `telnyx.speechModel()` are equivalent
+- `telnyx.transcription()` and `telnyx.transcriptionModel()` are equivalent
+- `imageModel()` is not supported and throws `NoSuchModelError`
+- The default `telnyx` export is lazy, so importing it does not require `TELNYX_API_KEY` until first use
+- Requires `ai@6` for speech and transcription APIs
 
 ## License
 
