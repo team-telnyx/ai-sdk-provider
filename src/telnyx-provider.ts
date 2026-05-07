@@ -77,6 +77,23 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     name: 'telnyx',
     baseURL,
     apiKey,
+    transformRequestBody: (body) => {
+      // Telnyx API requires tool function parameters to have explicit type: "object".
+      // The AI SDK may omit this field, so we inject it here.
+      if (body.tools && Array.isArray(body.tools)) {
+        body.tools = body.tools.map((tool: Record<string, unknown>) => {
+          const fn = tool.function as Record<string, unknown> | undefined;
+          if (fn?.parameters && typeof fn.parameters === 'object') {
+            const params = fn.parameters as Record<string, unknown>;
+            if (!params.type) {
+              fn.parameters = { type: 'object', ...params };
+            }
+          }
+          return tool;
+        });
+      }
+      return body;
+    },
   });
 
   /**
