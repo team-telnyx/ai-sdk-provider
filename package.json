@@ -1,6 +1,6 @@
 {
   "name": "@telnyx/ai-sdk-provider",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Telnyx provider for Vercel AI SDK — LLM, Embeddings, TTS, STT in a single package",
   "license": "MIT",
   "type": "module",
@@ -65,5 +65,8 @@
     "type": "git",
     "url": "https://github.com/team-telnyx/ai-sdk-provider.git"
   },
-  "homepage": "https://github.com/team-telnyx/ai-sdk-provider#readme"
+  "homepage": "https://github.com/team-telnyx/ai-sdk-provider#readme",
+  "engines": {
+    "node": ">=22"
+  }
 }
