@@ -127,9 +127,12 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV4 {
       formDataFields.response_format = 'verbose_json';
     }
 
-    // timestamp_granularities is handled separately after FormData creation
-    // because convertToFormData double-brackets array values ([][] instead of []).
-    const timestampGranularities = telnyxOptions?.timestamp_granularities;
+    // timestamp_granularities is passed as an array; convertToFormData in
+    // @ai-sdk/provider-utils@5 handles arrays correctly (single→no brackets,
+    // multi→key[] per item), so we can include it directly.
+    if (telnyxOptions?.timestamp_granularities) {
+      formDataFields.timestamp_granularities = telnyxOptions.timestamp_granularities;
+    }
 
     // Add language from providerOptions
     if (telnyxOptions?.language) {
@@ -160,14 +163,6 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV4 {
 
     // Convert to FormData
     const formData = convertToFormData(formDataFields);
-
-    // Append timestamp_granularities as repeated form fields (e.g. timestamp_granularities[]=segment)
-    // Must be done manually because convertToFormData double-brackets arrays.
-    if (timestampGranularities?.length) {
-      for (const granularity of timestampGranularities) {
-        formData.append('timestamp_granularities[]', granularity);
-      }
-    }
 
     // Append the audio file
     formData.append('file', audioBlob, filename);

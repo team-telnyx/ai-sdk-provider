@@ -37,7 +37,11 @@ describe.skipIf(!API_KEY)('Streaming Integration', () => {
 
     const usage = await result.usage;
     expect(usage).toBeDefined();
-    // inputTokens/outputTokens may be undefined if the provider doesn't return them
+    // The OpenAI-compatible provider may not populate inputTokens/outputTokens
+    // in streaming usage (depends on whether the provider returns usage in
+    // the stream). At minimum, the usage object must exist and be non-null.
+    // If token counts are present, they must be positive.
+    expect(usage).not.toBeNull();
     if (usage?.inputTokens != null) {
       expect(usage.inputTokens).toBeGreaterThan(0);
     }
