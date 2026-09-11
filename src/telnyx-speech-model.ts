@@ -1,4 +1,4 @@
-import type { SpeechModelV3, SpeechModelV3CallOptions, SharedV3Warning } from '@ai-sdk/provider';
+import type { SpeechModelV4, SpeechModelV4CallOptions, SharedV4Warning } from '@ai-sdk/provider';
 import {
   combineHeaders,
   createBinaryResponseHandler,
@@ -63,8 +63,8 @@ export interface TelnyxSpeechModelConfig {
  * });
  * ```
  */
-export class TelnyxSpeechModel implements SpeechModelV3 {
-  readonly specificationVersion = 'v3' as const;
+export class TelnyxSpeechModel implements SpeechModelV4 {
+  readonly specificationVersion = 'v4' as const;
 
   constructor(
     readonly modelId: string,
@@ -76,12 +76,12 @@ export class TelnyxSpeechModel implements SpeechModelV3 {
   }
 
   async doGenerate(
-    options: SpeechModelV3CallOptions,
-  ): Promise<Awaited<ReturnType<SpeechModelV3['doGenerate']>>> {
+    options: SpeechModelV4CallOptions,
+  ): Promise<Awaited<ReturnType<SpeechModelV4['doGenerate']>>> {
     const currentDate =
       this.config._internal?.currentDate?.() ?? new Date();
 
-    const warnings: SharedV3Warning[] =
+    const warnings: SharedV4Warning[] =
       [];
 
     // Parse provider-specific options

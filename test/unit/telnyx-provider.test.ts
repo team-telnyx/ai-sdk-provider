@@ -76,7 +76,7 @@ describe('createTelnyx', () => {
     const provider = createTelnyx({ apiKey: 'test' });
     const model = provider.speech('tts-1');
     expect(model).toBeDefined();
-    expect(model.specificationVersion).toBe('v3');
+    expect(model.specificationVersion).toBe('v4');
     expect(model.modelId).toBe('tts-1');
     expect(model.provider).toBe('telnyx.speech');
   });
@@ -90,7 +90,7 @@ describe('createTelnyx', () => {
     const provider = createTelnyx({ apiKey: 'test' });
     const model = provider.transcription('distil-whisper/distil-large-v2');
     expect(model).toBeDefined();
-    expect(model.specificationVersion).toBe('v3');
+    expect(model.specificationVersion).toBe('v4');
     expect(model.modelId).toBe('distil-whisper/distil-large-v2');
     expect(model.provider).toBe('telnyx.transcription');
   });
@@ -100,9 +100,9 @@ describe('createTelnyx', () => {
     expect(provider.transcriptionModel).toBe(provider.transcription);
   });
 
-  it('provider has specificationVersion v3', () => {
+  it('provider has specificationVersion v4', () => {
     const provider = createTelnyx({ apiKey: 'test' });
-    expect(provider.specificationVersion).toBe('v3');
+    expect(provider.specificationVersion).toBe('v4');
   });
 
   it('provider.imageModel() throws NoSuchModelError', () => {
@@ -125,7 +125,7 @@ describe('default telnyx export', () => {
 
   it('has specificationVersion without API key', () => {
     // specificationVersion is a value property, not a getter — always safe
-    expect(telnyx.specificationVersion).toBe('v3');
+    expect(telnyx.specificationVersion).toBe('v4');
   });
 
   it('property access is safe without API key', () => {
