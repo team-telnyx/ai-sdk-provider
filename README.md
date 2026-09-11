@@ -2,10 +2,16 @@
 
 Telnyx provider for the [Vercel AI SDK](https://ai-sdk.dev), with support for chat, embeddings, speech generation, and transcription.
 
+## Requirements
+
+- **Node.js** >= 22
+- **AI SDK** 7 (`ai@^7`)
+- **Zod** (`zod@^3.25 || ^4`)
+
 ## Setup
 
 ```bash
-npm install ai @telnyx/ai-sdk-provider zod
+npm install ai@^7 @telnyx/ai-sdk-provider zod
 ```
 
 `zod` is a required peer dependency. This package imports `zod/v4` internally for speech and transcription model schemas, so consumers must install it even if they are not using tool calling.
@@ -70,6 +76,25 @@ const { text } = await generateText({
 });
 ```
 
+### Structured Output
+
+```typescript
+import { telnyx } from '@telnyx/ai-sdk-provider';
+import { generateObject } from 'ai';
+import { z } from 'zod/v4';
+
+const { object } = await generateObject({
+  model: telnyx('meta-llama/Meta-Llama-3.1-8B-Instruct'),
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+  }),
+  prompt: 'Generate a fictional person named John who is 30 years old.',
+});
+
+console.log(object); // { name: 'John', age: 30 }
+```
+
 ### Embeddings
 
 ```typescript
@@ -96,7 +121,7 @@ import { telnyx } from '@telnyx/ai-sdk-provider';
 import { experimental_generateSpeech as generateSpeech } from 'ai';
 
 const { audio } = await generateSpeech({
-  model: telnyx.speechModel('tts-1'),
+  model: telnyx.speech('Telnyx.KokoroTTS.af_alloy'),
   text: 'Hello, welcome to Telnyx!',
   voice: 'Telnyx.NaturalHD.astra',
 });
@@ -109,7 +134,7 @@ import { telnyx } from '@telnyx/ai-sdk-provider';
 import { experimental_generateSpeech as generateSpeech } from 'ai';
 
 const { audio, warnings } = await generateSpeech({
-  model: telnyx.speechModel('tts-1'),
+  model: telnyx.speech('Telnyx.KokoroTTS.af_alloy'),
   text: 'Hello, welcome to Telnyx!',
   voice: 'Telnyx.KokoroTTS.af_alloy',
   outputFormat: 'mp3',
@@ -120,7 +145,7 @@ Provider-specific options are also supported via `providerOptions.telnyx`:
 
 ```typescript
 const { audio } = await generateSpeech({
-  model: telnyx.speechModel('tts-1'),
+  model: telnyx.speech('Telnyx.NaturalHD.astra'),
   text: 'Hello, welcome to Telnyx!',
   voice: 'Telnyx.NaturalHD.astra',
   providerOptions: {
@@ -143,11 +168,13 @@ import { readFile } from 'node:fs/promises';
 const result = await transcribe({
   model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
   audio: await readFile('./audio.wav'),
-  mediaType: 'audio/wav',
 });
 
 console.log(result.text);
 ```
+
+> **Note:** AI SDK 7 auto-detects the audio media type via `detectMediaType()`.
+> The `mediaType` parameter is no longer needed (and not accepted) in v7.
 
 You can also use provider-specific options:
 
@@ -155,7 +182,6 @@ You can also use provider-specific options:
 const result = await transcribe({
   model: telnyx.transcriptionModel('openai/whisper-large-v3-turbo'),
   audio: await readFile('./audio.wav'),
-  mediaType: 'audio/wav',
   providerOptions: {
     telnyx: {
       language: 'en',
@@ -171,7 +197,7 @@ const result = await transcribe({
 import { createTelnyx } from '@telnyx/ai-sdk-provider';
 
 const telnyx = createTelnyx({
-  apiKey: 'KEY_ID_SECRET',
+  apiKey: 'your_api_key',
   baseURL: 'https://api.telnyx.com/v2/ai/openai',
   fetch: customFetch, // optional custom fetch implementation
 });
@@ -187,6 +213,11 @@ const telnyx = createTelnyx({
 | `zai-org/GLM-5.1-FP8` | Highest intelligence open-source |
 | `MiniMaxAI/MiniMax-M2.7` | Cost-effective, high intelligence |
 | `Qwen/Qwen3-235B-A22B` | Function calling, reasoning |
+| `openai/gpt-4o` | General purpose |
+| `anthropic/claude-haiku-4-5` | Fast, efficient |
+| `google/gemini-2.5-flash` | Multimodal, fast |
+
+See `src/telnyx-models.ts` for the full list of supported model IDs.
 
 ### Embedding Models
 
@@ -194,14 +225,16 @@ const telnyx = createTelnyx({
 |---|---|
 | `thenlper/gte-large` | 1024 |
 
-### Speech Models
+### Speech Models (TTS)
 
-| Model ID | Description |
+The `modelId` passed to `telnyx.speech()` is used as the AI SDK model identifier for metadata/logging. The actual synthesis is controlled by the `voice` parameter and `providerOptions.telnyx`.
+
+| Voice | Provider |
 |---|---|
-| `tts-1` | Supported model identifier for AI SDK speech APIs |
-| `tts-1-hd` | Supported model identifier for AI SDK speech APIs |
+| `Telnyx.NaturalHD.astra` | NaturalHD |
+| `Telnyx.KokoroTTS.af_alloy` | KokoroTTS |
 
-Note: for the current Telnyx TTS implementation, `modelId` is used as the AI SDK model identifier and for metadata/logging. The actual synthesis request is controlled by options such as `voice`, `outputFormat`, and provider-specific `providerOptions.telnyx`, not by a different upstream TTS model selected via `modelId`.
+See the [Telnyx TTS docs](https://developers.telnyx.com/docs/voice/programmable-voice/tts) for available voices.
 
 ### Transcription Models
 
@@ -232,7 +265,24 @@ import {
 - `telnyx.transcription()` and `telnyx.transcriptionModel()` are equivalent
 - `imageModel()` is not supported and throws `NoSuchModelError`
 - The default `telnyx` export is lazy, so importing it does not require `TELNYX_API_KEY` until first use
-- Requires `ai@7` for speech and transcription APIs
+
+## Changelog
+
+### v2.0.0
+
+**Breaking change** — upgraded to AI SDK 7 (Provider V4).
+
+- **Breaking**: Requires `ai@^7` (previously `ai@^6`)
+- **Breaking**: Requires Node.js >= 22 (previously >= 18)
+- Migrated all provider interfaces from V3 to V4 (`ProviderV3` → `ProviderV4`, `LanguageModelV3` → `LanguageModelV4`, etc.)
+- `specificationVersion` changed from `'v3'` to `'v4'`
+- `mediaType` parameter removed from `transcribe()` (AI SDK 7 auto-detects via `detectMediaType`)
+- `LanguageModelUsage` `inputTokens`/`outputTokens` are now optional (may be `undefined` in streaming)
+- Security fixes: vitest 3→4, npm audit fixes (nanoid, postcss, vite)
+
+### v1.0.0
+
+Initial release. AI SDK 6 / Provider V3.
 
 ## License
 
