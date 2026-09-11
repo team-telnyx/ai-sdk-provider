@@ -1,7 +1,7 @@
 import type {
-  TranscriptionModelV3,
-  TranscriptionModelV3CallOptions,
-  SharedV3Warning,
+  TranscriptionModelV4,
+  TranscriptionModelV4CallOptions,
+  SharedV4Warning,
 } from '@ai-sdk/provider';
 import {
   combineHeaders,
@@ -83,8 +83,8 @@ export interface TelnyxTranscriptionModelConfig {
  * });
  * ```
  */
-export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
-  readonly specificationVersion = 'v3' as const;
+export class TelnyxTranscriptionModel implements TranscriptionModelV4 {
+  readonly specificationVersion = 'v4' as const;
 
   constructor(
     readonly modelId: string,
@@ -96,12 +96,12 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
   }
 
   async doGenerate(
-    options: TranscriptionModelV3CallOptions,
-  ): Promise<Awaited<ReturnType<TranscriptionModelV3['doGenerate']>>> {
+    options: TranscriptionModelV4CallOptions,
+  ): Promise<Awaited<ReturnType<TranscriptionModelV4['doGenerate']>>> {
     const currentDate =
       this.config._internal?.currentDate?.() ?? new Date();
 
-    const warnings: SharedV3Warning[] = [];
+    const warnings: SharedV4Warning[] = [];
 
     // Parse provider-specific options
     const telnyxOptions = await parseProviderOptions({
@@ -127,10 +127,6 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
       formDataFields.response_format = 'verbose_json';
     }
 
-    // timestamp_granularities is handled separately after FormData creation
-    // because convertToFormData double-brackets array values ([][] instead of []).
-    const timestampGranularities = telnyxOptions?.timestamp_granularities;
-
     // Add language from providerOptions
     if (telnyxOptions?.language) {
       formDataFields.language = telnyxOptions.language;
@@ -143,7 +139,7 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
       );
     }
 
-    // Handle audio data — convert to Blob for FormData
+    // Handle audio data — convert to Uint8Array if base64 string
     let audioData: Uint8Array;
     if (typeof options.audio === 'string') {
       // Base64 encoded string
@@ -161,10 +157,13 @@ export class TelnyxTranscriptionModel implements TranscriptionModelV3 {
     // Convert to FormData
     const formData = convertToFormData(formDataFields);
 
-    // Append timestamp_granularities as repeated form fields (e.g. timestamp_granularities[]=segment)
-    // Must be done manually because convertToFormData double-brackets arrays.
-    if (timestampGranularities?.length) {
-      for (const granularity of timestampGranularities) {
+    // Append timestamp_granularities with explicit array brackets.
+    // Telnyx's API requires the bracketed form (timestamp_granularities[]=segment)
+    // even for single-element arrays. convertToFormData in @ai-sdk/provider-utils@5
+    // sends single-element arrays without brackets (bare field), which causes a
+    // 500 Internal Server Error from the Telnyx API.
+    if (telnyxOptions?.timestamp_granularities?.length) {
+      for (const granularity of telnyxOptions.timestamp_granularities) {
         formData.append('timestamp_granularities[]', granularity);
       }
     }
@@ -242,7 +241,7 @@ const transcriptionResponseSchema = z.object({
     )
     .optional(),
   // Words are parsed from the API response but not yet mapped to the
-  // AI SDK return type (TranscriptionModelV3 does not define a words field).
+  // AI SDK return type (TranscriptionModelV4 does not define a words field).
   // Kept in the schema for forward compatibility when the SDK adds word-level support.
   words: z
     .array(

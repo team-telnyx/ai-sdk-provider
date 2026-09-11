@@ -2,12 +2,12 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { loadApiKey, withUserAgentSuffix } from '@ai-sdk/provider-utils';
 import {
   NoSuchModelError,
-  type EmbeddingModelV3,
-  type ImageModelV3,
-  type LanguageModelV3,
-  type ProviderV3,
-  type SpeechModelV3,
-  type TranscriptionModelV3,
+  type EmbeddingModelV4,
+  type ImageModelV4,
+  type LanguageModelV4,
+  type ProviderV4,
+  type SpeechModelV4,
+  type TranscriptionModelV4,
 } from '@ai-sdk/provider';
 import type {
   TelnyxChatModelId,
@@ -51,7 +51,7 @@ export interface TelnyxProviderSettings {
  * import { createTelnyx } from '@telnyx/ai-sdk-provider';
  * import { generateText } from 'ai';
  *
- * const telnyx = createTelnyx({ apiKey: 'KEY_ID_SECRET' });
+ * const telnyx = createTelnyx({ apiKey: 'your-key' });
  *
  * const { text } = await generateText({
  *   model: telnyx('Qwen/Qwen3-235B-A22B'),
@@ -132,7 +132,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     // Default: language model
     (modelId: TelnyxChatModelId) => openaiCompatible.languageModel(modelId),
     {
-      specificationVersion: 'v3' as const,
+      specificationVersion: 'v4' as const,
       /**
        * Get a language model (chat completions).
        */
@@ -149,7 +149,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
        * Telnyx does not support image models.
        * @throws {NoSuchModelError}
        */
-      imageModel: (modelId: string): ImageModelV3 => {
+      imageModel: (modelId: string): ImageModelV4 => {
         throw new NoSuchModelError({
           modelId,
           modelType: 'imageModel',
@@ -182,7 +182,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
 
       /**
        * Get a speech model (TTS).
-       * Alias for `speech()` to match the ProviderV3/V4 interface.
+       * Alias for `speech()` to match the ProviderV4 interface.
        */
       speechModel: createSpeechModel,
 
@@ -215,7 +215,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
 
       /**
        * Get a transcription model (STT).
-       * Alias for `transcription()` to match the ProviderV3/V4 interface.
+       * Alias for `transcription()` to match the ProviderV4 interface.
        */
       transcriptionModel: createTranscriptionModel,
     },
@@ -225,47 +225,47 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
 }
 
 /**
- * Telnyx provider interface following the AI SDK ProviderV3 specification.
+ * Telnyx provider interface following the AI SDK ProviderV4 specification.
  */
-export interface TelnyxProvider extends ProviderV3 {
+export interface TelnyxProvider extends ProviderV4 {
   /**
    * Call the provider as a function to get a language model.
    */
-  (modelId: TelnyxChatModelId): LanguageModelV3;
+  (modelId: TelnyxChatModelId): LanguageModelV4;
 
-  readonly specificationVersion: 'v3';
+  readonly specificationVersion: 'v4';
 
   /**
    * Get a language model (chat completions).
    */
-  languageModel(modelId: TelnyxChatModelId): LanguageModelV3;
+  languageModel(modelId: TelnyxChatModelId): LanguageModelV4;
 
   /**
    * Get an embedding model.
    */
-  embeddingModel(modelId: TelnyxEmbeddingModelId): EmbeddingModelV3;
+  embeddingModel(modelId: TelnyxEmbeddingModelId): EmbeddingModelV4;
 
   /**
    * Get a speech model (TTS).
    */
-  speech(modelId: TelnyxSpeechModelId): SpeechModelV3;
+  speech(modelId: TelnyxSpeechModelId): SpeechModelV4;
 
   /**
    * Get a speech model (TTS).
-   * Alias for `speech()` to match the ProviderV3/V4 interface.
+   * Alias for `speech()` to match the ProviderV4 interface.
    */
-  speechModel(modelId: TelnyxSpeechModelId): SpeechModelV3;
+  speechModel(modelId: TelnyxSpeechModelId): SpeechModelV4;
 
   /**
    * Get a transcription model (STT).
    */
-  transcription(modelId: TelnyxTranscriptionModelId): TranscriptionModelV3;
+  transcription(modelId: TelnyxTranscriptionModelId): TranscriptionModelV4;
 
   /**
    * Get a transcription model (STT).
-   * Alias for `transcription()` to match the ProviderV3/V4 interface.
+   * Alias for `transcription()` to match the ProviderV4 interface.
    */
-  transcriptionModel(modelId: TelnyxTranscriptionModelId): TranscriptionModelV3;
+  transcriptionModel(modelId: TelnyxTranscriptionModelId): TranscriptionModelV4;
 }
 
 /**
@@ -307,7 +307,7 @@ const _telnyxFn = (modelId: string) =>
 
 Object.defineProperties(_telnyxFn, {
   specificationVersion: {
-    value: 'v3' as const,
+    value: 'v4' as const,
     enumerable: true,
     writable: false,
   },

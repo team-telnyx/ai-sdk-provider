@@ -232,7 +232,7 @@ import {
 - `telnyx.transcription()` and `telnyx.transcriptionModel()` are equivalent
 - `imageModel()` is not supported and throws `NoSuchModelError`
 - The default `telnyx` export is lazy, so importing it does not require `TELNYX_API_KEY` until first use
-- Requires `ai@6` for speech and transcription APIs
+- Requires `ai@7` for speech and transcription APIs
 
 ## License
 

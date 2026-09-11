@@ -12,7 +12,6 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
     const transcript = await transcribe({
       model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
       audio: wavBuffer,
-      mediaType: 'audio/wav',
       abortSignal: AbortSignal.timeout(30000),
     });
 
@@ -32,7 +31,6 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
         'openai/whisper-large-v3-turbo',
       ),
       audio: wavBuffer,
-      mediaType: 'audio/wav',
       abortSignal: AbortSignal.timeout(30000),
     });
 
@@ -48,7 +46,6 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
     const transcript = await transcribe({
       model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
       audio: wavBuffer,
-      mediaType: 'audio/wav',
       providerOptions: {
         telnyx: {
           response_format: 'verbose_json',
@@ -73,7 +70,6 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
         'openai/whisper-large-v3-turbo',
       ),
       audio: wavBuffer,
-      mediaType: 'audio/wav',
       providerOptions: {
         telnyx: {
           language: 'en',
@@ -91,7 +87,7 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
       'distil-whisper/distil-large-v2',
     );
 
-    expect(model.specificationVersion).toBe('v3');
+    expect(model.specificationVersion).toBe('v4');
     expect(model.modelId).toBe('distil-whisper/distil-large-v2');
     expect(model.provider).toBe('telnyx.transcription');
   });
@@ -105,7 +101,6 @@ describe.skipIf(!API_KEY)('Telnyx Transcription (STT)', () => {
     const transcript = await transcribe({
       model: telnyx.transcriptionModel('distil-whisper/distil-large-v2'),
       audio: base64Audio,
-      mediaType: 'audio/wav',
       abortSignal: AbortSignal.timeout(30000),
     });
 
