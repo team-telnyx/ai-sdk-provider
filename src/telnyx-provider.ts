@@ -77,6 +77,7 @@ export function createTelnyx(options: TelnyxProviderSettings = {}) {
     name: 'telnyx',
     baseURL,
     apiKey,
+    fetch: options.fetch,
     transformRequestBody: (body) => {
       // Telnyx API requires tool function parameters to have explicit type: "object".
       // The AI SDK may omit this field, so we inject it here.
